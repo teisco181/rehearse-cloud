@@ -1,0 +1,90 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Default deny catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // Validation for Script
+    function isValidScript(data, userId) {
+      return data.userId == userId &&
+             data.userId == request.auth.uid &&
+             data.title is string &&
+             data.title.size() > 0 &&
+             data.title.size() <= 200 &&
+             data.characters is list &&
+             data.characters.size() <= 100 &&
+             data.scenes is list &&
+             data.scenes.size() <= 100;
+    }
+
+    // Validation for RehearsalSession
+    function isValidSession(data, userId) {
+      return data.userId == userId &&
+             data.userId == request.auth.uid &&
+             data.currentScriptId is string &&
+             data.currentScriptId.size() <= 128 &&
+             data.activeSceneIndex is number &&
+             data.activeSceneIndex >= 0 &&
+             data.currentLineId is number &&
+             data.currentLineId >= 0 &&
+             data.rehearsalState in ['PLAYING', 'PAUSED', 'WAITING_FOR_MIC', 'COMPLETED'];
+    }
+
+    // User scope isolated data - ZERO LEAKAGE POLICY
+    // Users can only access their own subcollections; no other user can read or query
+    match /users/{userId} {
+      allow get: if isOwner(userId);
+      allow list: if false; // No listing of users directory
+
+      // User scripts
+      match /scripts/{scriptId} {
+        allow get: if isOwner(userId);
+        allow list: if isOwner(userId);
+        allow create: if isOwner(userId) &&
+                         isValidId(scriptId) &&
+                         isValidScript(incoming(), userId);
+        allow update: if isOwner(userId) &&
+                         isValidScript(incoming(), userId) &&
+                         incoming().userId == existing().userId;
+        allow delete: if isOwner(userId);
+      }
+
+      // Real-time rehearsal sync sessions
+      match /sessions/{sessionId} {
+        allow get: if isOwner(userId);
+        allow list: if isOwner(userId);
+        allow create: if isOwner(userId) &&
+                         isValidId(sessionId) &&
+                         isValidSession(incoming(), userId);
+        allow update: if isOwner(userId) &&
+                         isValidSession(incoming(), userId) &&
+                         incoming().userId == existing().userId;
+        allow delete: if isOwner(userId);
+      }
+    }
+  }
+}

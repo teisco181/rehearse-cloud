@@ -1,0 +1,10 @@
+{
+  "name": "ScriptRehearser Cloud",
+  "description": "High-security web-based actor and musical script rehearsal app with real-time multi-device sync, AI script parsing, Dutch and English TTS/STT, and zero-leakage privacy.",
+  "requestFramePermissions": [
+    "microphone"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

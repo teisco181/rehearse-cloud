@@ -1,0 +1,104 @@
+{
+  "entities": {
+    "Script": {
+      "title": "Script",
+      "description": "An actor or musical script parsed into scenes and dialogue lines.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the script."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Owner user ID strictly matching request.auth.uid."
+        },
+        "title": {
+          "type": "string",
+          "description": "Title of the script or play.",
+          "maxLength": 200
+        },
+        "characters": {
+          "type": "array",
+          "description": "List of character names found in the script."
+        },
+        "characterVoices": {
+          "type": "object",
+          "description": "Per-character TTS voice configurations."
+        },
+        "scenes": {
+          "type": "array",
+          "description": "Scenes containing dialogue lines."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp of creation."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp of last modification."
+        }
+      },
+      "required": ["id", "userId", "title", "characters", "scenes"]
+    },
+    "RehearsalSession": {
+      "title": "RehearsalSession",
+      "description": "Real-time rehearsal state synchronized across multiple devices.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique session ID or user UID."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Owner user ID."
+        },
+        "currentScriptId": {
+          "type": "string",
+          "description": "Active script ID."
+        },
+        "activeSceneIndex": {
+          "type": "number",
+          "description": "Index of current scene."
+        },
+        "currentLineId": {
+          "type": "number",
+          "description": "Index or ID of current active dialogue line."
+        },
+        "rehearsalState": {
+          "type": "string",
+          "enum": ["PLAYING", "PAUSED", "WAITING_FOR_MIC", "COMPLETED"],
+          "description": "Current playback / microphone state."
+        },
+        "activeCharacter": {
+          "type": "string",
+          "description": "The actor's assigned character role."
+        },
+        "mode": {
+          "type": "string",
+          "enum": ["full", "cues_only", "blind_run", "speed_run"],
+          "description": "Rehearsal practice mode."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp of last update."
+        }
+      },
+      "required": ["id", "userId", "currentScriptId", "activeSceneIndex", "currentLineId", "rehearsalState"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}/scripts/{scriptId}": {
+      "schema": "Script",
+      "description": "Scripts private to the owning user."
+    },
+    "/users/{userId}/sessions/{sessionId}": {
+      "schema": "RehearsalSession",
+      "description": "Real-time synchronized rehearsal sessions private to the owning user."
+    }
+  }
+}
